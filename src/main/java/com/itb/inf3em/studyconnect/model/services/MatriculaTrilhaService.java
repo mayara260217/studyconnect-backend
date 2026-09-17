@@ -225,4 +225,7 @@ public class MatriculaTrilhaService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trilha nao encontrada.")));
     }
 
+    /** Mantida para compatibilidade binaria com o controller legado. */
+    public static class AlreadySavedException extends RuntimeException { }
+
 }
