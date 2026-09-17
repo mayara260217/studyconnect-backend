@@ -14,6 +14,7 @@ import com.itb.inf3em.studyconnect.security.AuthenticatedUser;
 import com.itb.inf3em.studyconnect.security.TrilhaAuthorization;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public class MatriculaTrilhaService {
         this.trilhaAuthorization = trilhaAuthorization;
     }
 
+    @Transactional
     public MatriculaTrilha matricular(Long alunoId, Long trilhaId) {
         Long authenticatedAlunoId = alunoAuthorization.resolveAlunoId(alunoId);
         // Valida existência
@@ -59,18 +61,16 @@ public class MatriculaTrilhaService {
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Trilha não encontrada."));
 
         // Verifica se já existe (ativa ou inativa)
-        matriculaRepository.findByAlunoIdAndTrilhaId(authenticatedAlunoId, trilhaId).ifPresent(m -> {
+        return matriculaRepository.findByAlunoIdAndTrilhaId(authenticatedAlunoId, trilhaId).map(m -> {
             if (m.isAtivo()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Aluno já está matriculado nesta trilha.");
             }
             // Reativa matrícula cancelada
             m.setAtivo(true);
-            matriculaRepository.save(m);
-            throw new AlreadySavedException();
-        });
+            return matriculaRepository.save(m);
+        }).orElseGet(() -> matriculaRepository.save(new MatriculaTrilha(authenticatedAlunoId, trilhaId)));
 
-        return matriculaRepository.save(new MatriculaTrilha(authenticatedAlunoId, trilhaId));
     }
 
     public void desmatricular(Long alunoId, Long trilhaId) {
@@ -225,6 +225,4 @@ public class MatriculaTrilhaService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trilha nao encontrada.")));
     }
 
-    // Sentinel exception used to short-circuit reactivation flow
-    public static class AlreadySavedException extends RuntimeException {}
 }
