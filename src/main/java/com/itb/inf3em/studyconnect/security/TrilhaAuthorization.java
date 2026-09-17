@@ -29,4 +29,19 @@ public class TrilhaAuthorization {
             throw new AccessDeniedException("Voce nao tem permissao para gerenciar esta trilha.");
         }
     }
+
+    public boolean canManage(Trilha trilha) {
+        AuthenticatedUser user = currentUser.require();
+        return user.tipoUsuario() == TipoUsuario.ADMIN
+                || (user.tipoUsuario() == TipoUsuario.PROFESSOR
+                && user.usuarioId().equals(trilha.getProfessorId()));
+    }
+
+    public void requireCanView(Trilha trilha) {
+        currentUser.require();
+        if ("PUBLICA".equalsIgnoreCase(trilha.getTipo()) || canManage(trilha)) {
+            return;
+        }
+        throw new AccessDeniedException("Voce nao tem permissao para visualizar esta trilha.");
+    }
 }

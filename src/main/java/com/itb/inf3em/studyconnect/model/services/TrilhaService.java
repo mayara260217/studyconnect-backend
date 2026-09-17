@@ -37,7 +37,7 @@ public class TrilhaService {
      * Can be filtered in the future if needed.
      */
     public List<Trilha> getAllTrilhas() {
-        return trilhaRepository.findAll();
+        return trilhaRepository.findAll().stream().filter(this::canView).toList();
     }
 
     /**
@@ -45,18 +45,20 @@ public class TrilhaService {
      * Throws exception if not found.
      */
     public Trilha getTrilhaById(Long id) {
-        return trilhaRepository.findById(id)
+        Trilha trilha = trilhaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Trilha não encontrada com o id: " + id
                 ));
+        trilhaAuthorization.requireCanView(trilha);
+        return trilha;
     }
 
     /**
      * Get all trilhas created by a specific teacher.
      */
     public List<Trilha> getTrilhasByProfessor(Long professorId) {
-        return trilhaRepository.findByProfessorId(professorId);
+        return trilhaRepository.findByProfessorId(professorId).stream().filter(this::canView).toList();
     }
 
     /**
@@ -152,5 +154,14 @@ public class TrilhaService {
         Trilha trilha = getTrilhaById(id);
         trilhaAuthorization.requireCanManage(trilha);
         trilhaRepository.delete(trilha);
+    }
+
+    private boolean canView(Trilha trilha) {
+        try {
+            trilhaAuthorization.requireCanView(trilha);
+            return true;
+        } catch (org.springframework.security.access.AccessDeniedException exception) {
+            return false;
+        }
     }
 }

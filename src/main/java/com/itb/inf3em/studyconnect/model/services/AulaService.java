@@ -30,17 +30,21 @@ public class AulaService {
      * Get all aulas for a specific trilha.
      */
     public List<Aula> getAulasByTrilha(Long trilhaId) {
-        trilhaRepository.findById(trilhaId)
+        Trilha trilha = trilhaRepository.findById(trilhaId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Trilha não encontrada com o id: " + trilhaId
                 ));
 
+        trilhaAuthorization.requireCanView(trilha);
         try {
-            return aulaRepository.findByTrilhaIdOrderByOrdem(trilhaId);
+            List<Aula> aulas = aulaRepository.findByTrilhaIdOrderByOrdem(trilhaId);
+            return trilhaAuthorization.canManage(trilha) ? aulas : aulas.stream()
+                    .filter(aula -> "PUBLICADA".equalsIgnoreCase(aula.getStatus()))
+                    .toList();
         } catch (Exception ex) {
             // Banco pode estar desatualizado (ex: coluna nova ainda não migrada)
-            return java.util.Collections.emptyList();
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Nao foi possivel consultar as aulas.");
         }
     }
 
@@ -49,11 +53,18 @@ public class AulaService {
      * Throws exception if not found.
      */
     public Aula getAulaById(Long id) {
-        return aulaRepository.findById(id)
+        Aula aula = aulaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Aula não encontrada com o id: " + id
                 ));
+        Trilha trilha = trilhaRepository.findById(aula.getTrilhaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trilha nao encontrada."));
+        trilhaAuthorization.requireCanView(trilha);
+        if (!trilhaAuthorization.canManage(trilha) && !"PUBLICADA".equalsIgnoreCase(aula.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Aula nao encontrada com o id: " + id);
+        }
+        return aula;
     }
 
     /**
@@ -86,7 +97,7 @@ public class AulaService {
             return aulaRepository.save(aula);
         } catch (Exception ex) {
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao criar aula: " + ex.getMessage());
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Nao foi possivel criar a aula.");
         }
     }
 
