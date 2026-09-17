@@ -71,6 +71,7 @@ class TokenSecurityTest {
         ReflectionTestUtils.setField(passwordResetService, "tokenRepository", resetRepo);
         ReflectionTestUtils.setField(passwordResetService, "emailService", emailService);
         ReflectionTestUtils.setField(passwordResetService, "passwordEncoder", new BCryptPasswordEncoder());
+        ReflectionTestUtils.setField(passwordResetService, "credentialValidationService", new CredentialValidationService());
         ReflectionTestUtils.setField(passwordResetService, "frontendUrl", "http://localhost:5173");
 
         emailChangeService = new EmailChangeService();
@@ -189,7 +190,7 @@ class TokenSecurityTest {
         when(resetRepo.save(any())).thenAnswer(i -> i.getArgument(0));
         when(usuarioRepo.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        passwordResetService.redefinirSenha("tok", "novaSenha123");
+        passwordResetService.redefinirSenha("tok", "NovaSenha@123");
 
         assertThat(token.isUsed()).isTrue();
     }

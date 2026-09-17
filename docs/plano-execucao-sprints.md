@@ -50,3 +50,9 @@ Corrigir riscos identificados preservando os contratos atuais da API. Cada alter
 ## Sequência de execução
 
 Cada sprint terá: implementação, testes unitários/integração pertinentes, atualização da documentação de regras e alterações, execução da suíte e commit descritivo. A Sprint 1 só começa com a suíte verde da Sprint 0; mudanças de banco da Sprint 2 exigem revisão explícita antes do deploy.
+
+## Sprint 4 — Consistência de credenciais
+
+**Objetivo:** aplicar no reset a mesma política de senha utilizada no cadastro.
+
+**Critério de aceite:** senhas fracas são rejeitadas antes de qualquer consulta ao token.

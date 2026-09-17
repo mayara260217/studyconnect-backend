@@ -27,6 +27,7 @@ public class PasswordResetService {
     @Autowired private PasswordResetTokenRepository tokenRepository;
     @Autowired private EmailService emailService;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private CredentialValidationService credentialValidationService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -60,6 +61,7 @@ public class PasswordResetService {
 
     @Transactional
     public void redefinirSenha(String token, String novaSenha) {
+        credentialValidationService.validatePassword(novaSenha);
         if (novaSenha == null || novaSenha.length() < 6) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A senha deve ter no mínimo 6 caracteres.");
         }
