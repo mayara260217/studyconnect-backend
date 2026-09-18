@@ -38,7 +38,7 @@ public class Aula {
     @Column(name = "atualizada_em", nullable = false)
     private LocalDateTime atualizadaEm;
 
-    @Column(length = 20, nullable = false, columnDefinition = "NVARCHAR(20) NOT NULL DEFAULT 'PUBLICADA'")
+    @Column(columnDefinition = "NVARCHAR(20) NOT NULL DEFAULT 'PUBLICADA'")
     private String status = "PUBLICADA";  // PUBLICADA | RASCUNHO
 
     // Constructors

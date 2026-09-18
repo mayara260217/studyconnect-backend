@@ -2,7 +2,6 @@ package com.itb.inf3em.studyconnect.security;
 
 import com.itb.inf3em.studyconnect.model.entity.Usuario;
 import com.itb.inf3em.studyconnect.model.repository.UsuarioRepository;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,11 +19,11 @@ import java.util.Optional;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final TokenService tokenService;
     private final UsuarioRepository usuarioRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UsuarioRepository usuarioRepository) {
-        this.jwtService = jwtService;
+    public JwtAuthenticationFilter(TokenService tokenService, UsuarioRepository usuarioRepository) {
+        this.tokenService = tokenService;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -37,36 +36,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        try {
-            // 1. Valida assinatura, expiração e claims obrigatórios
-            AuthenticatedUser fromJwt = jwtService.parseToken(header.substring(7));
+        String token = header.substring(7);
+        Optional<Long> usuarioId = tokenService.getUsuarioId(token);
 
-            // 2. Consulta o banco — fonte de verdade para existência, ativo e tipoUsuario
-            Optional<Usuario> opt = usuarioRepository.findById(fromJwt.usuarioId());
-            if (opt.isEmpty() || !opt.get().isAtivo()) {
-                // Usuário inexistente ou desativado: não autentica, segue sem contexto
-                filterChain.doFilter(request, response);
-                return;
+        if (usuarioId.isPresent()) {
+            Optional<Usuario> opt = usuarioRepository.findById(usuarioId.get());
+            if (opt.isPresent() && opt.get().isAtivo()) {
+                Usuario usuario = opt.get();
+                AuthenticatedUser user = new AuthenticatedUser(
+                        usuario.getId(),
+                        usuario.getEmail(),
+                        usuario.getTipoUsuario()
+                );
+                SecurityContextHolder.getContext().setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                                user,
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_" + user.tipoUsuario().name()))
+                        )
+                );
             }
-
-            // 3. Constrói AuthenticatedUser com dados ATUAIS do banco
-            Usuario usuario = opt.get();
-            AuthenticatedUser user = new AuthenticatedUser(
-                    usuario.getId(),
-                    usuario.getEmail(),
-                    usuario.getTipoUsuario()
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + user.tipoUsuario().name()))
-                    )
-            );
-        } catch (JwtException | IllegalArgumentException exception) {
-            // Token inválido, expirado ou adulterado: segue sem contexto → 401
-            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

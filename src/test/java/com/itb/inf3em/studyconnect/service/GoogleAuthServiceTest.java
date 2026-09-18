@@ -1,9 +1,9 @@
 package com.itb.inf3em.studyconnect.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.itb.inf3em.studyconnect.model.repository.UsuarioRepository;
 import com.itb.inf3em.studyconnect.model.services.GoogleAuthService;
-import com.itb.inf3em.studyconnect.security.JwtService;
+import com.itb.inf3em.studyconnect.security.TokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -41,7 +41,7 @@ class GoogleAuthServiceTest {
 
         service = new GoogleAuthService(
                 mock(UsuarioRepository.class),
-                mock(JwtService.class),
+                mock(TokenService.class),
                 restClient
         );
         ReflectionTestUtils.setField(service, "expectedClientId", CLIENT_ID);

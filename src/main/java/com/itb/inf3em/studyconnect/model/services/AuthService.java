@@ -5,7 +5,7 @@ import com.itb.inf3em.studyconnect.model.dto.LoginResponseDTO;
 import com.itb.inf3em.studyconnect.model.entity.Usuario;
 import com.itb.inf3em.studyconnect.model.repository.EmailVerificationTokenRepository;
 import com.itb.inf3em.studyconnect.model.repository.UsuarioRepository;
-import com.itb.inf3em.studyconnect.security.JwtService;
+import com.itb.inf3em.studyconnect.security.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ public class AuthService {
     private EmailVerificationTokenRepository tokenRepository;
 
     @Autowired
-    private JwtService jwtService;
+    private TokenService tokenService;
 
     public LoginResponseDTO login(LoginRequestDTO request) {
         long t0 = System.currentTimeMillis();
@@ -61,8 +61,6 @@ public class AuthService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "E-mail nao verificado. Verifique sua caixa de entrada.");
             }
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conta suspensa. Entre em contato com o suporte.");
-            // Conta suspensa — retorna normalmente com ativo=false
-            // o frontend redireciona para a página de suspensão
         }
 
         log.info("[AUTH] login total: {}ms", System.currentTimeMillis() - t0);
@@ -74,8 +72,8 @@ public class AuthService {
                 usuario.getFotoUrl(),
                 usuario.getEmail(),
                 usuario.isAtivo(),
-                jwtService.generateToken(usuario),
-                jwtService.getExpirationSeconds()
+                tokenService.generateToken(usuario),
+                tokenService.getExpirationSeconds()
         );
     }
 }

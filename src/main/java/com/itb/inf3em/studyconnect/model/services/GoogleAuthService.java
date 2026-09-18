@@ -4,7 +4,7 @@ import com.itb.inf3em.studyconnect.model.dto.LoginResponseDTO;
 import com.itb.inf3em.studyconnect.model.entity.TipoUsuario;
 import com.itb.inf3em.studyconnect.model.entity.Usuario;
 import com.itb.inf3em.studyconnect.model.repository.UsuarioRepository;
-import com.itb.inf3em.studyconnect.security.JwtService;
+import com.itb.inf3em.studyconnect.security.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,20 +26,20 @@ public class GoogleAuthService {
     static final List<String> VALID_ISSUERS = List.of("accounts.google.com", "https://accounts.google.com");
 
     private final UsuarioRepository usuarioRepository;
-    private final JwtService jwtService;
+    private final TokenService tokenService;
     private final RestClient restClient;
 
     @Value("${app.google.client-id:}")
     private String expectedClientId;
 
     @Autowired
-    public GoogleAuthService(UsuarioRepository usuarioRepository, JwtService jwtService) {
-        this(usuarioRepository, jwtService, RestClient.create());
+    public GoogleAuthService(UsuarioRepository usuarioRepository, TokenService tokenService) {
+        this(usuarioRepository, tokenService, RestClient.create());
     }
 
-    public GoogleAuthService(UsuarioRepository usuarioRepository, JwtService jwtService, RestClient restClient) {
+    public GoogleAuthService(UsuarioRepository usuarioRepository, TokenService tokenService, RestClient restClient) {
         this.usuarioRepository = usuarioRepository;
-        this.jwtService = jwtService;
+        this.tokenService = tokenService;
         this.restClient = restClient;
     }
 
@@ -85,8 +85,8 @@ public class GoogleAuthService {
                 usuario.getFotoUrl(),
                 usuario.getEmail(),
                 usuario.isAtivo(),
-                jwtService.generateToken(usuario),
-                jwtService.getExpirationSeconds()
+                tokenService.generateToken(usuario),
+                tokenService.getExpirationSeconds()
         );
     }
 
