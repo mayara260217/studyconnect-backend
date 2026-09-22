@@ -26,7 +26,7 @@ public class Usuario {
     private String fotoUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_usuario", length = 20, nullable = false)
+    @Column(name = "tipo_usuario", columnDefinition = "NVARCHAR(20) NOT NULL")
     private TipoUsuario tipoUsuario;
 
     @Column(nullable = false)
