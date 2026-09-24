@@ -92,17 +92,29 @@ App Mobile
 ```
 app/
 ├── (tabs)/         ← Telas com a barra de navegação inferior
-├── login.tsx       ← Tela de login
-├── cadastro.tsx    ← Tela de cadastro
-└── _layout.tsx     ← Configuração de navegação
+├── login.tsx       ← Tela de login (chama useAuth().login)
+├── cadastro.tsx    ← Tela de cadastro (chama useAuth().cadastrar)
+├── verificar-email.tsx ← Confirmação do código de 6 dígitos
+└── _layout.tsx     ← Configuração de navegação + guarda de rota
 
 contexts/
 └── auth-context.tsx ← Gerencia quem está logado (estado global do usuário)
 
+services/
+└── auth-service.ts  ← Regras de integração com o back-end (rotas + erros tipados)
+
 utils/
-├── api.ts          ← URL base do back-end
-└── storage.ts      ← Salva dados no celular (token JWT, dados do usuário)
+├── api.ts          ← URL base + apiFetch/authFetch + token (Sprint 11)
+├── storage.ts      ← Salva dados no celular (token, dados do usuário)
+└── validacao.ts    ← Mesmas regras de e-mail/senha do back-end
+
+__tests__/
+└── auth-service.test.ts ← Testes unitários do login/cadastro (Sprint 8)
 ```
+
+**Regra de camadas:** a tela não conhece `fetch`. Ela conversa com o contexto, o
+contexto conversa com o serviço e o serviço conversa com a infraestrutura HTTP
+(`utils/api.ts`). É a mesma ideia do back-end (controller → service → repository).
 
 ---
 
@@ -146,17 +158,66 @@ conteúdo privado ou rascunhos de outros professores.
 
 ### ✅ Sprint 6 — Integração Login Mobile ↔ Back-end
 **O que foi feito:** a tela de login do app foi conectada ao back-end real.
-Detalhes completos em [`integracao-login-mobile.md`](./integracao-login-mobile.md).
 
 **Resumo das mudanças:**
 - CORS liberado para emulador Android (`10.0.2.2`) e Expo Web (`localhost:19006`)
 - Mock de login removido — agora chama `POST /api/v1/auth/login` de verdade
-- JWT salvo no `SecureStore` do celular após login bem-sucedido
+- Token de sessão salvo no `SecureStore` do celular após login bem-sucedido
 - Tratamento de erros: credenciais inválidas, e-mail não verificado, falha de rede
+
+> **Nota de auditoria (Sprint 12):** ao revisar o código, o mock de `login()` ainda
+> estava em `auth-context.tsx` — a Sprint 6 estava documentada, mas não aplicada ao
+> repositório mobile. O mock foi removido de fato nas sprints 6/10 desta rodada e
+> agora o fluxo inteiro é real. Documento histórico: [`integracao-login-mobile.md`](./integracao-login-mobile.md).
 
 ---
 
-## Sprints Planejadas
+### ✅ Sprints 6 a 12 — Entrega Consolidada (integração mobile ↔ back-end)
+
+O documento original separava as sprints 7–12 com exemplos de código para estudo.
+O que foi **efetivamente implementado e testado** está resumido abaixo; o contrato
+completo das rotas vive em [`integracao-mobile-backend.md`](./integracao-mobile-backend.md).
+
+| Sprint | Entrega | Onde está |
+|--------|---------|-----------|
+| 6 | Login real no app: `POST /auth/login`, token no SecureStore, erros de 401/403/rede | `contexts/auth-context.tsx`, `app/login.tsx`, `services/auth-service.ts` |
+| 7 | `AuthServiceTest` — 6 cenários de login com Mockito (+ 1 bônus de não vazar informação) | `src/test/java/.../service/AuthServiceTest.java` |
+| 8 | Testes do front-end com Jest: login ok, 401, 403, sem conexão, cadastro, validação de senha | `__tests__/auth-service.test.ts`, `jest.config.js` |
+| 9 | `testID`s adicionados nas telas (`input-email`, `input-senha`, `btn-entrar`, `input-codigo`, `btn-verificar`, `btn-criar-conta`) | `app/login.tsx`, `app/cadastro.tsx`, `app/verificar-email.tsx` |
+| 10 | Cadastro real: `POST /usuarios`, regras de senha iguais às do back-end, redireciona para `/verificar-email` | `app/cadastro.tsx`, `contexts/auth-context.tsx`, `utils/validacao.ts` |
+| 11 | `authFetch` com `Authorization: Bearer`, expiração local do token e logout automático no 401 | `utils/api.ts`, `contexts/auth-context.tsx`, `app/_layout.tsx` |
+| 12 | Testes de controller com MockMvc: login (`200`/`400`/`401`/`403`) e cadastro (`201`/`400`/`409`) | `src/test/java/.../controller/AuthControllerTest.java`, `UsuarioControllerTest.java` |
+
+**Melhorias de arquitetura (SOLID) aplicadas:**
+
+1. `AuthService` migrou de `@Autowired` em campos para **injeção por construtor** —
+   dependências obrigatórias e imutáveis, e o teste unitário monta o serviço com mocks.
+2. O app ganhou a camada `services/`, espelhando o back-end (controller → service →
+   repository). Nenhuma tela chama `fetch` direto; o `401` e o cabeçalho de
+   autenticação ficam em um único lugar (`utils/api.ts`).
+3. Erros de domínio tipados no app (`CredenciaisInvalidasError`,
+   `EmailNaoVerificadoError`, `EmailJaCadastradoError`, `DadosInvalidosError`,
+   `ContaSuspensaError`, `ErroDeRede`), em vez de comparar números soltos na tela.
+4. Validação de senha duplicada de propósito (`utils/validacao.ts` espelha
+   `CredentialValidationService`) para o aluno receber o aviso **antes** do HTTP 400.
+
+### ✅ Pendências e próximos passos (Sprint 13+)
+
+- **Detox (E2E de UI)**: os `testID`s já estão nas telas; falta instalar o Detox e rodar
+  no emulador Android — depende de SDK/emulador na máquina de quem for executar.
+- **Refresh token**: hoje a sessão dura 15 min (`expiresIn`) e o restart do servidor
+  invalida o token (sessões em memória). Uma sprint futura pode persistir sessões no
+  banco ou adotar JWT assinado com renovação.
+- **Telas de conteúdo** (`biblioteca.tsx`, `ranking.tsx`) ainda usam `http://SEU_BACKEND/...`
+  como placeholder — devem ser migradas para `authFetch` quando as rotas de trilhas,
+  aulas e ranking entrarem no contrato.
+
+---
+
+## Sprints Planejadas (histórico didático)
+
+> Os textos abaixo foram mantidos como **material de estudo** (passo a passo original
+> da equipe). O que já foi entregue está consolidado na seção anterior.
 
 ---
 
@@ -359,12 +420,12 @@ Sprint 3  ✅  CORS configurável por ambiente
 Sprint 4  ✅  Consistência de validação de senha
 Sprint 5  ✅  Testes de regressão de visibilidade
 Sprint 6  ✅  Integração login mobile ↔ back-end
-Sprint 7  🔲  Testes unitários do login (back-end)
-Sprint 8  🔲  Testes unitários do login (front-end)
-Sprint 9  🔲  Testes E2E do fluxo de login
-Sprint 10 🔲  Integração cadastro mobile ↔ back-end
-Sprint 11 🔲  Token JWT nas requisições autenticadas
-Sprint 12 🔲  Testes de integração (controller layer)
+Sprint 7  ✅  Testes unitários do login (back-end)
+Sprint 8  ✅  Testes unitários do login (front-end)
+Sprint 9  ⏳  Testes E2E do fluxo de login (testIDs prontos; falta Detox + emulador)
+Sprint 10 ✅  Integração cadastro mobile ↔ back-end
+Sprint 11 ✅  Token de sessão nas requisições autenticadas
+Sprint 12 ✅  Testes de integração (controller layer)
 ```
 
 ---
@@ -373,13 +434,13 @@ Sprint 12 🔲  Testes de integração (controller layer)
 
 ### Como rodar os testes do back-end
 ```bash
-cd D:\Inf3em_23\studyconnect-backend-1
+cd D:\INF3EM_23\studyconnect-backend
 ./mvnw test
 ```
 
 ### Como rodar os testes do front-end
 ```bash
-cd D:\INF3EM\Studyconnect-mobile
+cd D:\INF3EM_23\Studyconnect-mobile
 npx jest
 ```
 

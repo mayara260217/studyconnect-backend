@@ -8,7 +8,6 @@ import com.itb.inf3em.studyconnect.model.repository.UsuarioRepository;
 import com.itb.inf3em.studyconnect.security.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,20 +18,23 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final CredentialValidationService credentialValidationService;
+    private final EmailVerificationTokenRepository tokenRepository;
+    private final TokenService tokenService;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private CredentialValidationService credentialValidationService;
-
-    @Autowired
-    private EmailVerificationTokenRepository tokenRepository;
-
-    @Autowired
-    private TokenService tokenService;
+    public AuthService(UsuarioRepository usuarioRepository,
+                       BCryptPasswordEncoder passwordEncoder,
+                       CredentialValidationService credentialValidationService,
+                       EmailVerificationTokenRepository tokenRepository,
+                       TokenService tokenService) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.credentialValidationService = credentialValidationService;
+        this.tokenRepository = tokenRepository;
+        this.tokenService = tokenService;
+    }
 
     public LoginResponseDTO login(LoginRequestDTO request) {
         long t0 = System.currentTimeMillis();
