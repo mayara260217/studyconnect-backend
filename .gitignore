@@ -6,8 +6,7 @@ node_modules/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-# Local credentials — never commit this
-application-local.properties
+
 
 ### STS ###
 .apt_generated
