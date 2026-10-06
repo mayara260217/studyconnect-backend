@@ -47,6 +47,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/email-change/confirm").permitAll()
                         .requestMatchers("/api/v1/admin/**", "/api/email/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/usuarios").hasRole("ADMIN")
+                        // Materiais: qualquer usuário autenticado pode listar e buscar
+                        // Apenas o próprio usuário pode criar e deletar (validado no Service)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/materiais", "/api/v1/materiais/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/tickets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/tickets/*/responder",
