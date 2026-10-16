@@ -63,4 +63,20 @@ public class MaterialService {
         Material material = findById(id);
         materialRepository.delete(material);
     }
+
+    // Atualiza título, matéria, tipo, categoria e url de um material existente
+    public Material update(Long id, Material dados) {
+        Material material = findById(id);
+        if (dados.getTitulo() != null && !dados.getTitulo().isBlank())
+            material.setTitulo(dados.getTitulo());
+        if (dados.getMateria() != null && !dados.getMateria().isBlank())
+            material.setMateria(dados.getMateria());
+        if (dados.getTipo() != null && !dados.getTipo().isBlank())
+            material.setTipo(dados.getTipo());
+        if (dados.getCategoria() != null && !dados.getCategoria().isBlank())
+            material.setCategoria(dados.getCategoria());
+        material.setUrl(dados.getUrl());
+        material.setLinkExterno(dados.getLinkExterno());
+        return materialRepository.save(material);
+    }
 }

@@ -29,9 +29,13 @@ public class Material {
     @Column(length = 50, nullable = false)
     private String categoria;
 
-    // URL de acesso ao arquivo (pode ser link externo ou caminho interno)
+    // URL do arquivo enviado (PDF, imagem — caminho interno ou /uploads/...)
     @Column(length = 500)
     private String url;
+
+    // Link externo (Google Forms, sites, vídeos, etc.)
+    @Column(name = "link_externo", length = 500)
+    private String linkExterno;
 
     // ID do usuário que enviou o material
     @Column(name = "usuario_id", nullable = false)
@@ -68,6 +72,9 @@ public class Material {
 
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
+
+    public String getLinkExterno() { return linkExterno; }
+    public void setLinkExterno(String linkExterno) { this.linkExterno = linkExterno; }
 
     public Long getUsuarioId() { return usuarioId; }
     public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }

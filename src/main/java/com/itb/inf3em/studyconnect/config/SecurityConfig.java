@@ -28,6 +28,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.disable()))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Autenticacao obrigatoria."))
@@ -48,8 +50,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**", "/api/email/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/usuarios").hasRole("ADMIN")
                         // Materiais: qualquer usuário autenticado pode listar e buscar
-                        // Apenas o próprio usuário pode criar e deletar (validado no Service)
+                        // Apenas ADMIN e PROFESSOR podem criar e deletar
                         .requestMatchers(HttpMethod.GET, "/api/v1/materiais", "/api/v1/materiais/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/materiais").hasAnyRole("ADMIN", "PROFESSOR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/materiais/upload").hasAnyRole("ADMIN", "PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/materiais/**").hasAnyRole("ADMIN", "PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/materiais/**").hasAnyRole("ADMIN", "PROFESSOR")
+                        // Arquivos de upload: públicos (iframe não envia Authorization)
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/tickets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/tickets/*/responder",

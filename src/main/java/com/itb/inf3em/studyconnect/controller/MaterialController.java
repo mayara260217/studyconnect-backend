@@ -3,11 +3,15 @@ package com.itb.inf3em.studyconnect.controller;
 import com.itb.inf3em.studyconnect.model.dto.MaterialDTO;
 import com.itb.inf3em.studyconnect.model.entity.Material;
 import com.itb.inf3em.studyconnect.model.services.MaterialService;
+import com.itb.inf3em.studyconnect.model.services.UploadService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 // Controller é a "porta de entrada" das requisições HTTP.
 // Recebe a requisição, chama o Service e devolve a resposta.
@@ -16,9 +20,11 @@ import java.util.List;
 public class MaterialController {
 
     private final MaterialService materialService;
+    private final UploadService uploadService;
 
-    public MaterialController(MaterialService materialService) {
+    public MaterialController(MaterialService materialService, UploadService uploadService) {
         this.materialService = materialService;
+        this.uploadService = uploadService;
     }
 
     /**
@@ -59,6 +65,17 @@ public class MaterialController {
     }
 
     /**
+     * POST /api/v1/materiais/upload
+     * Recebe um arquivo (PDF, PNG, JPG, JPEG), salva em disco e retorna a URL pública.
+     * Apenas ADMIN e PROFESSOR podem fazer upload.
+     */
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> upload(@RequestParam("arquivo") MultipartFile arquivo) {
+        String url = uploadService.salvar(arquivo);
+        return ResponseEntity.ok(Map.of("url", url));
+    }
+
+    /**
      * POST /api/v1/materiais
      * Cria um novo material.
      * Body obrigatório: { titulo, materia, tipo, categoria, usuarioId }
@@ -69,6 +86,15 @@ public class MaterialController {
     public ResponseEntity<MaterialDTO> save(@RequestBody Material material) {
         Material salvo = materialService.save(material);
         return ResponseEntity.status(HttpStatus.CREATED).body(new MaterialDTO(salvo));
+    }
+
+    /**
+     * PUT /api/v1/materiais/{id}
+     * Atualiza um material existente.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<MaterialDTO> update(@PathVariable Long id, @RequestBody Material material) {
+        return ResponseEntity.ok(new MaterialDTO(materialService.update(id, material)));
     }
 
     /**

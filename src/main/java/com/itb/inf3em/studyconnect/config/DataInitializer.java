@@ -40,6 +40,7 @@ public class DataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         log.info("[SEED] Iniciando carga de dados iniciais...");
 
+        seedAdmin();
         Usuario professor = seedProfessor();
         Usuario aluno = seedAluno();
         seedTurma(professor);
@@ -63,6 +64,19 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     // ── Usuários ─────────────────────────────────────────────────────────────
+
+    private void seedAdmin() {
+        usuarios.findByEmail("admin@studyconnect.com").orElseGet(() -> {
+            Usuario u = new Usuario();
+            u.setNome("Admin");
+            u.setEmail("admin@studyconnect.com");
+            u.setSenha(passwordEncoder.encode("Admin@123"));
+            u.setTipoUsuario(TipoUsuario.ADMIN);
+            u.setAtivo(true);
+            log.info("[SEED] Admin criado.");
+            return usuarios.save(u);
+        });
+    }
 
     private Usuario seedProfessor() {
         return usuarios.findByEmail("professor@studyconnect.com").orElseGet(() -> {

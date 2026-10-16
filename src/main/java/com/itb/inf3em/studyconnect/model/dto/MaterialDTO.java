@@ -13,6 +13,7 @@ public class MaterialDTO {
     private String tipo;
     private String categoria;
     private String url;
+    private String linkExterno;
     private Long usuarioId;
     private LocalDateTime criadoEm;
 
@@ -24,6 +25,7 @@ public class MaterialDTO {
         this.tipo      = material.getTipo();
         this.categoria = material.getCategoria();
         this.url       = material.getUrl();
+        this.linkExterno = material.getLinkExterno();
         this.usuarioId = material.getUsuarioId();
         this.criadoEm  = material.getCriadoEm();
     }
@@ -49,6 +51,9 @@ public class MaterialDTO {
 
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
+
+    public String getLinkExterno() { return linkExterno; }
+    public void setLinkExterno(String linkExterno) { this.linkExterno = linkExterno; }
 
     public Long getUsuarioId() { return usuarioId; }
     public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
